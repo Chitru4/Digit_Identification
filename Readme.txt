@@ -1,3 +1,4 @@
-Digit Identification
+Handwritten Digit and Alphabet Identification
 
-Done mostly in Python
+Handwritten Digit and Alphabet Identification using keras CNN algorithms and GUI made on TKinter.
+
