@@ -15,7 +15,7 @@ word_dict = {0:'A',1:'B',2:'C',3:'D',4:'E',5:'F',6:'G',7:'H',8:'I',9:'J',
              18:'S',19:'T',20:'U',21:'V',22:'W',23:'X', 24:'Y',25:'Z'}
 
 def predict_digit(img):
-    global label
+    global label,res,reschar
     imgn = img
     #resize image to 28x28 pixels
     img = img.resize((28,28))
@@ -46,6 +46,10 @@ def predict_digit(img):
 
 def classify_handwriting():
     global label
+    try:
+        t1.destroy()
+    except:
+        pass
     label = Label(window,text="Thinking..", font=("Helvetica", 48))
     widget = cv
     # Setting co-ordinates of canvas
@@ -58,11 +62,29 @@ def classify_handwriting():
     digit, acc = predict_digit(im)
     print(digit,acc)
     label.place(x=340, y=420)
+
+    # Feedback
+    corr_output = Label(window,text="Is the output correct?", font=("Helvetica", 20))
+    corr_output.place(x=120,y=420)
+    yes_button = Button(window, text="YES", font= 15, bg="white", fg="green", command=right_predict)
+    yes_button.place(x=120, y=450)
+    no_button = Button(window, text="NO", font= 15, bg="white", fg="red", command=wrong_pedict)
+    no_button.place(x=180, y=450)
  
  
 lastx, lasty = None, None
  
- 
+# Right Prefdiction(YES)
+def right_predict():
+    global res,reschar
+    print(np.argmax(res),max(res),np.argmax(reschar),max(reschar))
+
+# Wrong Prediction(NO)
+def wrong_pedict():
+    t1 = Text(window, height = 1.4,width = 7,font=("Helvetica", 45),bg = "white",fg="black")
+    t1.place(x=120, y=420)
+
+
 # Clears the canvas
 def clear_widget():
     global cv, l1
@@ -86,20 +108,22 @@ def draw_lines(event):
  
  
 # Label
-L1 = Label(window, text="Handwritten Digit Recoginition", font= 25, fg="blue")
+L1 = Label(window, text="Handwritten Character Recoginition", fg="green",font=("Times", 36))
 L1.place(x=35, y=10)
  
 # Button to clear canvas
-b1 = Button(window, text="1. Clear Canvas", font= 15, bg="orange", fg="black", command=clear_widget)
+b1 = Button(window, text="1. Clear Canvas", font=("Helvetica", "20", "bold italic"), bg="orange", fg="black", command=clear_widget)
 b1.place(x=120, y=370)
  
 # Button to predict digit drawn on canvas
-b2 = Button(window, text="2. Prediction", font= 15, bg="white", fg="red", command=classify_handwriting)
+b2 = Button(window, text="2. Prediction", font=("Helvetica", "20", "bold italic"), bg="white", fg="red", command=classify_handwriting)
 b2.place(x=320, y=370)
+
  
 # Setting properties of canvas
 cv = Canvas(window, width=350, height=290, bg='black')
 cv.place(x=120, y=70)
+
  
 cv.bind('<Button-1>', event_activation)
 window.geometry("600x500")
