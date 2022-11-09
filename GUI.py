@@ -1,7 +1,9 @@
 from tkinter import *
 import numpy as np
 from PIL import ImageGrab
+import keras
 from keras.models import load_model
+from keras.models import Sequential
  
 window = Tk()
 window.title("Handwritten digit recognition")
@@ -15,17 +17,15 @@ word_dict = {0:'A',1:'B',2:'C',3:'D',4:'E',5:'F',6:'G',7:'H',8:'I',9:'J',
              18:'S',19:'T',20:'U',21:'V',22:'W',23:'X', 24:'Y',25:'Z'}
 
 def predict_digit(img):
-    global label,res,reschar
+    global label,res,reschar,img1,imgn
     imgn = img
-    #resize image to 28x28 pixels
     img = img.resize((28,28))
-    #convert rgb to grayscale
     img = img.convert('L')
-    #img.show()
     img = np.array(img)
-    #reshaping to support our model input and normalizing
     img = img.reshape(1,28,28,1)
     img = img/255.0
+
+    img1 = img
 
     #Character Recognition
     imgn = imgn.resize((28,28))
@@ -76,13 +76,62 @@ lastx, lasty = None, None
  
 # Right Prefdiction(YES)
 def right_predict():
-    global res,reschar
-    print(np.argmax(res),max(res),np.argmax(reschar),max(reschar))
+    global res,reschar,img1,imgn
+    if max(res) >= max(reschar):
+        x_train = np.array(img1)
+        y_train = [np.argmax(res)]
+        x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
+        input_shape = (28, 28, 1)
+        y_train = keras.utils.to_categorical(y_train, 10)
+        x_train = x_train.astype('float32')
+        hist = model.fit(x_train, y_train,batch_size=128,epochs=10,verbose=1)
+    else:
+        x_train = np.array(imgn)
+        y_train = [np.argmax(reschar)]
+        x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
+        input_shape = (28, 28, 1)
+        y_train = keras.utils.to_categorical(y_train, 10)
+        x_train = x_train.astype('float32')
+        hist = modelchar.fit(x_train, y_train,batch_size=128,epochs=10,verbose=1)
+
+    blank = Label(window,height=10,width=8,font=("Helvetica", 40))
+    blank.place(x=120,y=420)  
+
 
 # Wrong Prediction(NO)
 def wrong_pedict():
-    t1 = Text(window, height = 1.4,width = 7,font=("Helvetica", 45),bg = "white",fg="black")
+    global t1
+    blank = Label(window,height=10,width=8,font=("Helvetica", 40))
+    blank.place(x=120,y=420) 
+    t1 = Text(window, height = 1,width = 3,font=("Helvetica", 45),bg = "white",fg="black")
     t1.place(x=120, y=420)
+    bw = Button(window,text= '☠️',height = 1,width = 2,font=("Helvetica", 45),bg = "black",fg="black",command=wrong_done )
+    bw.place(x=220, y=420)
+
+def wrong_done():
+    global t1,reschar,img1,imgn
+    blank = Label(window,height=10,width=8,font=("Helvetica", 40))
+    blank.place(x=120,y=420) 
+
+    realchar = t1.get(1.0, "end-1c")
+
+    if realchar[0].isnumeric():
+        x_train = np.array(img1)
+        y_train = [realchar]
+        x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
+        input_shape = (28, 28, 1)
+        y_train = keras.utils.to_categorical(y_train, 10)
+        x_train = x_train.astype('float32')
+        hist = model.fit(x_train, y_train,batch_size=128,epochs=10,verbose=1)
+
+    else:
+        x_train = np.array(imgn)
+        y_train = [i for i in word_dict if word_dict[i]==realchar]
+        x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
+        input_shape = (28, 28, 1)
+        y_train = keras.utils.to_categorical(y_train, 10)
+        x_train = x_train.astype('float32')
+        hist = modelchar.fit(x_train, y_train,batch_size=128,epochs=10,verbose=1)
 
 
 # Clears the canvas
@@ -128,3 +177,6 @@ cv.place(x=120, y=70)
 cv.bind('<Button-1>', event_activation)
 window.geometry("600x500")
 window.mainloop()
+
+model.save('mnist1.h5')
+modelchar.save(r'model_hand1.h5')
